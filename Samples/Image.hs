@@ -34,7 +34,7 @@ module Samples.Image where
 
         bpp <- pixelFormatGetBytesPerPixel (surfaceGetPixelFormat surface)
         print bpp
-        
+
         -- Due to Haskell-SDL's limits:
         --  Can't support palattes
         --  Only support specific formats
@@ -58,7 +58,7 @@ module Samples.Image where
 
         freeSurface surface
 
-        textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
+        textureFilter Texture2D $= ((Linear', Nothing), Linear')
         textureWrapMode Texture2D S $= (Repeated, Repeat)
         textureWrapMode Texture2D T $= (Repeated, Repeat)
 
