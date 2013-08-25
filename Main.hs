@@ -8,7 +8,7 @@ import qualified Graphics.UI.WX as WX
 import qualified Graphics.Rendering.OpenGL as GL
 
 import Render
-import qualified TriangleSample as R
+import Samples.Checker as R
 
 defaultWidth = 480
 defaultHeight = 480
@@ -29,12 +29,11 @@ gui = do
 
     glCanvas <- glCanvasCreateEx glw 0 (Rect 0 0 defaultWidth defaultHeight) 0 "GLCanvas" [GL_RGBA] nullPalette
     glContext <- glContextCreateFromNull glCanvas
-    multisample $= Enabled
 
+    glCanvasSetCurrent glCanvas glContext
     dat <- R.initialize
  
-    WX.set f [ layout := widget glw,
-        on paintRaw := paintGL dat glContext glCanvas ]
+    WX.set f [ layout := widget glw, on paintRaw := paintGL dat glContext glCanvas ]
 
     -- frameShowFullScreen f True wxFULLSCREEN_ALL
     timer f [interval := 20, on command := paintIt dat glContext glCanvas (WX.Size defaultWidth defaultHeight)]
@@ -51,6 +50,8 @@ paintGL dat glContext glWindow _ myrect _ = paintIt dat glContext glWindow $ rec
 paintIt dat glContext glWindow size = do
     glCanvasSetCurrent glWindow glContext
     GL.viewport $= (Position 0 0, convWG size)
+    multisample $= Enabled
+
     render dat
     flush
     glCanvasSwapBuffers glWindow
