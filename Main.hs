@@ -8,7 +8,7 @@ import qualified Graphics.UI.WX as WX
 import qualified Graphics.Rendering.OpenGL as GL
 
 import Render
-import Samples.Checker as R
+import Samples.Image as R
 
 defaultWidth = 480
 defaultHeight = 480
@@ -19,7 +19,7 @@ main = start gui
 gui :: IO ()
 gui = do
     sfield <- statusField [ text := "ready"]
-    f <- frame [ text := "GodLab",
+    f <- frame [ text := "God's Lab",
                  statusBar := [ sfield ] ]
 
     createMenu f
