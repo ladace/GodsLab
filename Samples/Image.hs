@@ -33,7 +33,6 @@ module Samples.Image where
 
 
         bpp <- pixelFormatGetBytesPerPixel (surfaceGetPixelFormat surface)
-        print bpp
 
         -- Due to Haskell-SDL's limits:
         --  Can't support palattes

@@ -8,7 +8,9 @@ import qualified Graphics.UI.WX as WX
 import qualified Graphics.Rendering.OpenGL as GL
 
 import Render
-import Samples.Image as R
+import Video as R
+
+import qualified Script
 
 defaultWidth = 480
 defaultHeight = 480
@@ -31,12 +33,18 @@ gui = do
     glContext <- glContextCreateFromNull glCanvas
 
     glCanvasSetCurrent glCanvas glContext
-    dat <- R.initialize
+
+    dat <- R.initialize defaultWidth defaultHeight
+
+    script <- Script.initialize
+
+    glwSize <- WX.get glw clientSize
+    GL.viewport $= (Position 0 0, convWG glwSize)
  
-    WX.set f [ layout := widget glw, on paintRaw := paintGL dat glContext glCanvas ]
+    WX.set f [ layout := widget glw, on paintRaw := paintGL dat glContext glCanvas script]
 
     -- frameShowFullScreen f True wxFULLSCREEN_ALL
-    timer f [interval := 20, on command := paintIt dat glContext glCanvas (WX.Size defaultWidth defaultHeight)]
+    timer f [interval := 20, on command := paintIt dat glContext glCanvas script (WX.Size defaultWidth defaultHeight)]
     return ()
 
 createMenu frame = do
@@ -46,13 +54,12 @@ createMenu frame = do
     WX.set frame [ menuBar := [file],
                    on (menu mclose) := close frame]
 
-paintGL dat glContext glWindow _ myrect _ = paintIt dat glContext glWindow $ rectSize myrect
-paintIt dat glContext glWindow size = do
+paintGL dat glContext glWindow script _ myrect _ = paintIt dat glContext glWindow script $ rectSize myrect
+paintIt dat glContext glWindow script size = do
     glCanvasSetCurrent glWindow glContext
-    GL.viewport $= (Position 0 0, convWG size)
     multisample $= Enabled
 
-    render dat
+    render dat script
     flush
     glCanvasSwapBuffers glWindow
     return ()

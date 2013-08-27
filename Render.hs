@@ -1,3 +1,5 @@
 module Render where
-	class RenderProcedure a where
-		render :: a -> IO ()
+    import Scripting.Lua
+
+    class RenderProcedure a where
+		render :: a -> LuaState -> IO ()
