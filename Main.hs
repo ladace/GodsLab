@@ -20,9 +20,9 @@ main = start gui
 
 gui :: IO ()
 gui = do
-    sfield <- statusField [ text := "ready"]
+    infoField <- statusField [ text := "ready"]
     f <- frame [ text := "God's Lab",
-                 statusBar := [ sfield ] ]
+                 statusBar := [ infoField ] ]
 
     createMenu f
 

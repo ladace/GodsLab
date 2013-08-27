@@ -60,19 +60,18 @@ instance StackValue Video.Image where
     valuetype _ = TUSERDATA
 
 checkUData :: (StackValue a, Storable a) => String -> LuaState -> Int -> IO (Maybe a)
-checkUData tname l argn = do
-    ok <- getmetatable l argn
-    if ok
-    then do
+checkUData tname l argn =
+    getmetatable l argn >>= flip success (do
         getfield l registryindex tname
-        ok <- equal l (-1) (-2)
+        eq <- equal l (-1) (-2)
         pop l 2
 
-        if ok
-        then liftM Just $ touserdata l argn >>= S.peek
-        else return Nothing
-    else return Nothing
+        success eq $ liftM Just $ touserdata l argn >>= S.peek)
 
 setClass l className= do
     getfield l registryindex className
     setmetatable l (-2)
+
+success :: MonadPlus m => Bool -> IO (m a) -> IO (m a)
+success True proc = proc
+success False _ = return mzero
