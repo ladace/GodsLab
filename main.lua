@@ -1,4 +1,3 @@
-tes()
 img = loadImage("assets/samples/test.png")
 
 function draw()

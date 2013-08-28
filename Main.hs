@@ -25,10 +25,7 @@ gui = do
     f <- frame [ text := "God's Lab",
                  statusBar := [ infoField ] ]
 
-    createMenu f
-
     glw <- window f [area := WX.Rect 0 0 defaultWidth defaultHeight]
-    WX.set f [visible := True]
 
     glCanvas <- glCanvasCreateEx glw 0 (Rect 0 0 defaultWidth defaultHeight) 0 "GLCanvas" [GL_RGBA] nullPalette
     glContext <- glContextCreateFromNull glCanvas
@@ -44,8 +41,14 @@ gui = do
     glwSize <- WX.get glw clientSize
     GL.viewport $= (Position 0 0, convWG glwSize)
  
-    let app = App dat script appControl
-    
+    app <- do
+        ss <- newScriptStatus
+        return $ App dat script ss appControl
+
+    createMenu app f
+
+    WX.set f [visible := True]
+
     Script.load app
 
     WX.set f [ layout := widget glw, on paintRaw := paintGL app glContext glCanvas]
@@ -54,12 +57,16 @@ gui = do
     timer f [interval := 20, on command := paintIt app glContext glCanvas (WX.Size defaultWidth defaultHeight)]
     return ()
 
-createMenu frame = do
+createMenu app frame = do
     file <- menuPane [ text := "&File" ]
     mclose <- menuItem file [text := "&Close\tCtrl+Q", help := "Close the document"]
 
-    WX.set frame [ menuBar := [file],
-                   on (menu mclose) := close frame]
+    control <- menuPane [ text := "&Control"]
+    mreload <- menuItem control [ text := "&Reload\tCtrl+R", help := "Reload script"]
+
+    WX.set frame [ menuBar := [file, control],
+                   on (menu mclose) := close frame,
+                   on (menu mreload) := Script.load app ] -- TODO need clean luastate
 
 paintGL app glContext glWindow _ myrect _ = paintIt app glContext glWindow $ rectSize myrect
 paintIt app glContext glWindow _ = do

@@ -32,15 +32,21 @@ initialize = do
 
 load :: App a -> IO ()
 load app = do
+    setScriptStatus app ScriptReady
+
     let l = appScript app
     pushcfunction l =<< wrap errorfunc
     err <- loadfile l "main.lua"
+    
+    printInfoStatus app "running main.lua"
+    
     when (err == 0) $
         pcall l 0 0 (-2) >>= flip onError (handler l)
     where
         handler l err = do
             printInfoStatus app =<< tostring l (-1)
             printErrInfo err
+            setScriptStatus app ScriptInvalid
         printErrInfo LuaErrRun = putStrLn "Script Error: Initial Run"
         printErrInfo LuaErrMem = putStrLn "Script Error: Memory Allocation"
         printErrInfo LuaErrErr = putStrLn "Script Error: Error Handler"
