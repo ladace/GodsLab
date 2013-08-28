@@ -22,10 +22,11 @@ main = start gui
 gui :: IO ()
 gui = do
     infoField <- statusField [ text := "ready"]
-    f <- frame [ text := "God's Lab",
-                 statusBar := [ infoField ] ]
+    f <- frameFixed [ text := "God's Lab"
+                    , statusBar := [ infoField ] ]
 
-    glw <- window f [area := WX.Rect 0 0 defaultWidth defaultHeight]
+    glw <- panel f [ clientSize := WX.Size defaultWidth defaultHeight]
+
 
     glCanvas <- glCanvasCreateEx glw 0 (Rect 0 0 defaultWidth defaultHeight) 0 "GLCanvas" [GL_RGBA] nullPalette
     glContext <- glContextCreateFromNull glCanvas
@@ -51,11 +52,18 @@ gui = do
 
     Script.load app
 
-    WX.set f [ layout := widget glw, on paintRaw := paintGL app glContext glCanvas]
+    WX.set glCanvas [ on mouse := mouseHandler app, on keyboard := keyHandler app ] -- MUST use glCanvas other than glw
+    WX.set f [layout := minsize (sz defaultWidth defaultHeight) $ widget glw, on paintRaw := paintGL app glContext glCanvas]
+
 
     -- frameShowFullScreen f True wxFULLSCREEN_ALL
     timer f [interval := 20, on command := paintIt app glContext glCanvas (WX.Size defaultWidth defaultHeight)]
     return ()
+
+    where
+        mouseHandler app (MouseLeftDown p _) = invokeScriptMaybe app "user.onkeydown" (pointX p) (pointY p)
+        mouseHandler app e = print e 
+        keyHandler app e = print e
 
 createMenu app frame = do
     file <- menuPane [ text := "&File" ]

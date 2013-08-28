@@ -1,4 +1,4 @@
-module Script where
+module Script (initialize, load) where
 
 import Foreign.Storable as S
 import Foreign.Ptr
@@ -67,6 +67,7 @@ doExport l = do
     pop l 1
     registerhsfunction l "loadImage" Video.loadImage
     registerhsfunction l "drawImage" Video.drawImage
+
 
 foreign import ccall "wrapper"
     wrap :: LuaCFunction -> IO (FunPtr LuaCFunction) -- Never free them

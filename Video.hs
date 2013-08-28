@@ -15,8 +15,7 @@ data Video = Video
 instance RenderProcedure Video where
     render app = do
         clear [ ColorBuffer ]
-        E.catch (guardScript app $ Lua.callproc (appScript app) "user.draw") $ \e ->
-            print (e :: IOException)
+        invokeScript app "user.draw"
 
 
 initialize :: Int -> Int -> IO Video
