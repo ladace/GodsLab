@@ -37,6 +37,16 @@ load app = do
     let l = appScript app
     pushcfunction l =<< wrap errorfunc
     err <- loadfile l "main.lua"
+
+    newtable l
+    newtable l
+    getfield l globalsindex "_G"
+    setfield l (-2) "__index"
+    setmetatable l (-2)
+    pushvalue l (-1)
+    setfenv l (-3)
+
+    setglobal l "user"
     
     printInfoStatus app "running main.lua"
     
