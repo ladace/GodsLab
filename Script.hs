@@ -1,15 +1,17 @@
 module Script where
 
-import Scripting.Lua
-import qualified Video
-import qualified Graphics.Rendering.OpenGL as GL
-
 import Foreign.Storable as S
 import Foreign.Ptr
 import Foreign.C.Types
 import Control.Monad
 
-data LuaError = LuaSuccess | LuaErrRun | LuaErrMem | LuaErrErr
+import Scripting.Lua
+import qualified Video
+import qualified Graphics.Rendering.OpenGL as GL
+
+import App
+
+data LuaError = LuaSuccess | LuaErrRun | LuaErrMem | LuaErrErr deriving Show
 
 toLuaError :: Int -> LuaError
 toLuaError 0 = LuaSuccess
@@ -26,20 +28,22 @@ initialize = do
     l <- newstate
     openlibs l
     doExport l
-
-    pushcfunction l =<< wrap errorfunc
-
-    err <- loadfile l "main.lua"
-
-    when (err == 0) $
-        pcall l 0 0 (-2) >>= flip onError handler
-        
     return l
 
+load :: App a -> IO ()
+load app = do
+    let l = appScript app
+    pushcfunction l =<< wrap errorfunc
+    err <- loadfile l "main.lua"
+    when (err == 0) $
+        pcall l 0 0 (-2) >>= flip onError (handler l)
     where
-        handler LuaErrRun = putStrLn "Script Error: Initial Run"
-        handler LuaErrMem = putStrLn "Script Error: Memory Allocation"
-        handler LuaErrErr = putStrLn "Script Error: Error Handler"
+        handler l err = do
+            printInfoStatus app =<< tostring l (-1)
+            printErrInfo err
+        printErrInfo LuaErrRun = putStrLn "Script Error: Initial Run"
+        printErrInfo LuaErrMem = putStrLn "Script Error: Memory Allocation"
+        printErrInfo LuaErrErr = putStrLn "Script Error: Error Handler"
 
 doExport :: LuaState -> IO ()
 doExport l = do
@@ -53,7 +57,6 @@ foreign import ccall "wrapper"
 
 errorfunc :: LuaCFunction
 errorfunc l = do
-    putStrLn =<< tostring l 1
     pushvalue l 1
     return 1
 

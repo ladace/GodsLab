@@ -35,6 +35,8 @@ gui = do
 
     glCanvasSetCurrent glCanvas glContext
 
+    let appControl = AppControl (setTextProp infoField)
+
     dat <- R.initialize defaultWidth defaultHeight
 
     script <- Script.initialize
@@ -42,7 +44,10 @@ gui = do
     glwSize <- WX.get glw clientSize
     GL.viewport $= (Position 0 0, convWG glwSize)
  
-    let app = App dat script AppControl
+    let app = App dat script appControl
+    
+    Script.load app
+
     WX.set f [ layout := widget glw, on paintRaw := paintGL app glContext glCanvas]
 
     -- frameShowFullScreen f True wxFULLSCREEN_ALL
@@ -68,3 +73,8 @@ paintIt app glContext glWindow _ = do
 
 convWG (WX.Size w h) = GL.Size (convInt32 w) (convInt32  h)
 convInt32 = fromInteger . toInteger
+
+-----------------------------
+-- Helpers
+
+setTextProp field txt = WX.set field [text := txt]

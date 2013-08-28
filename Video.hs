@@ -1,13 +1,13 @@
 module Video where
 
-import Render
+import Control.Exception as E (catch, IOException)
 import Graphics.Rendering.OpenGL
-
 import Graphics.UI.SDL.Image
 import Graphics.UI.SDL.Types
 import Graphics.UI.SDL.Video (freeSurface)
 
 import App
+import Render
 import qualified Scripting.Lua as Lua
 
 data Video = Video
@@ -15,7 +15,9 @@ data Video = Video
 instance RenderProcedure Video where
     render app = do
         clear [ ColorBuffer ]
-        Lua.callproc (appScript app) "draw"
+        E.catch (Lua.callproc (appScript app) "draw") $ \e ->
+            print (e :: IOException)
+
 
 initialize :: Int -> Int -> IO Video
 initialize w h = do

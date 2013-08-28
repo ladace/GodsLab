@@ -1,3 +1,4 @@
 *.o
 *.hi
 lab
+*_stub.h
