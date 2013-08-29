@@ -11,11 +11,12 @@ import qualified Graphics.Rendering.OpenGL as GL
 
 import App
 
-data LuaError = LuaSuccess | LuaErrRun | LuaErrMem | LuaErrErr deriving Show
+data LuaError = LuaSuccess | LuaErrRun | LuaErrSyntax | LuaErrMem | LuaErrErr deriving Show
 
 toLuaError :: Int -> LuaError
 toLuaError 0 = LuaSuccess
 toLuaError 2 = LuaErrRun
+toLuaError 3 = LuaErrSyntax
 toLuaError 4 = LuaErrMem
 toLuaError 6 = LuaErrErr
 
@@ -38,28 +39,27 @@ load app = do
     pushcfunction l =<< wrap errorfunc
     err <- loadfile l "main.lua"
 
-    newtable l
-    newtable l
-    getfield l globalsindex "_G"
-    setfield l (-2) "__index"
-    setmetatable l (-2)
-    pushvalue l (-1)
-    setfenv l (-3)
+    onError err (handler l)
 
-    setglobal l "user"
+    when (err == 0) $ do
+        newtable l
+        newtable l
+        getfield l globalsindex "_G"
+        setfield l (-2) "__index"
+        setmetatable l (-2)
+        pushvalue l (-1)
+        setfenv l (-3)
+
+        setglobal l "user"
+        
+        printInfoStatus app "running main.lua"
     
-    printInfoStatus app "running main.lua"
-    
-    when (err == 0) $
         pcall l 0 0 (-2) >>= flip onError (handler l)
     where
         handler l err = do
             printInfoStatus app =<< tostring l (-1)
-            printErrInfo err
+            print err
             setScriptStatus app ScriptInvalid
-        printErrInfo LuaErrRun = putStrLn "Script Error: Initial Run"
-        printErrInfo LuaErrMem = putStrLn "Script Error: Memory Allocation"
-        printErrInfo LuaErrErr = putStrLn "Script Error: Error Handler"
 
 doExport :: LuaState -> IO ()
 doExport l = do

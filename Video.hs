@@ -1,6 +1,5 @@
 module Video where
 
-import Control.Exception as E (catch, IOException)
 import Graphics.Rendering.OpenGL
 import Graphics.UI.SDL.Image
 import Graphics.UI.SDL.Types
@@ -8,7 +7,6 @@ import Graphics.UI.SDL.Video (freeSurface)
 
 import App
 import Render
-import qualified Scripting.Lua as Lua
 
 data Video = Video
 

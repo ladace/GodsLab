@@ -33,7 +33,7 @@ gui = do
 
     glCanvasSetCurrent glCanvas glContext
 
-    let appControl = AppControl (setTextProp infoField)
+    let control = AppControl (setTextProp infoField)
 
     dat <- R.initialize defaultWidth defaultHeight
 
@@ -44,7 +44,7 @@ gui = do
  
     app <- do
         ss <- newScriptStatus
-        return $ App dat script ss appControl
+        return $ App dat script ss control
 
     createMenu app f
 
@@ -53,7 +53,7 @@ gui = do
     Script.load app
 
     WX.set glCanvas [ on mouse := mouseHandler app, on keyboard := keyHandler app ] -- MUST use glCanvas other than glw
-    WX.set f [layout := minsize (sz defaultWidth defaultHeight) $ widget glw, on paintRaw := paintGL app glContext glCanvas]
+    WX.set f [layout := widget glw, on paintRaw := paintGL app glContext glCanvas]
 
 
     -- frameShowFullScreen f True wxFULLSCREEN_ALL
@@ -61,19 +61,20 @@ gui = do
     return ()
 
     where
-        mouseHandler app (MouseLeftDown p _) = invokeScriptMaybe app "user.onkeydown" (pointX p) (pointY p)
-        mouseHandler app e = print e 
-        keyHandler app e = print e
+        mouseHandler app (MouseLeftDown p _) = invokeScriptMaybe app "user.onmousedown" (pointX p) (pointY p)
+        mouseHandler app (MouseMotion p _) = invokeScriptMaybe app "user.onmousemove" (pointX p) (pointY p)
+        mouseHandler _ e = print e
+        keyHandler app (EventKey k _ _) = invokeScriptMaybe app "user.onkey" $ keyToKeyCode k
 
-createMenu app frame = do
+createMenu app frm = do
     file <- menuPane [ text := "&File" ]
     mclose <- menuItem file [text := "&Close\tCtrl+Q", help := "Close the document"]
 
     control <- menuPane [ text := "&Control"]
     mreload <- menuItem control [ text := "&Reload\tCtrl+R", help := "Reload script"]
 
-    WX.set frame [ menuBar := [file, control],
-                   on (menu mclose) := close frame,
+    WX.set frm [ menuBar := [file, control],
+                   on (menu mclose) := close frm,
                    on (menu mreload) := Script.load app ] -- TODO need clean luastate
 
 paintGL app glContext glWindow _ myrect _ = paintIt app glContext glWindow $ rectSize myrect
