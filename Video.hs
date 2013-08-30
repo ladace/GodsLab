@@ -2,7 +2,7 @@ module Video where
 
 import Graphics.Rendering.OpenGL
 import Graphics.UI.SDL.Image
-import Graphics.UI.SDL.Types
+import qualified Graphics.UI.SDL.Types as SDL
 import Graphics.UI.SDL.Video (freeSurface)
 
 import App
@@ -22,38 +22,21 @@ initialize w h = do
     ortho 0 (fromIntegral w) (fromIntegral h) 0 (-10000) 10000
     return Video
 
-data Image = Image { imageTexture :: TextureObject, mImageWidth :: Int, mImageHeight :: Int }
-
-drawImage :: Image -> Float -> Float -> Float -> Float -> IO ()
-drawImage img l t w h = do
-    textureBinding Texture2D $= Just (imageTexture img)
-    texture Texture2D $= Enabled
-
-    let r = l + w
-        b = t + h
-    renderPrimitive Quads $ do
-        texCoord $ texCoord2f 0 0
-        vertex $ vertex3f l t 0
-        texCoord $ texCoord2f 1 0
-        vertex $ vertex3f r t 0
-        texCoord $ texCoord2f 1 1
-        vertex $ vertex3f r b 0
-        texCoord $ texCoord2f 0 1
-        vertex $ vertex3f l b 0
+data Image = Image { imageTexture :: TextureObject, imageWidth :: Int, imageHeight :: Int }
 
 loadImage :: String -> IO Image
 loadImage path = do
     surface <- load path
-    let width = fromIntegral $ surfaceGetWidth surface
-        height = fromIntegral $ surfaceGetHeight surface
+    let width = fromIntegral $ SDL.surfaceGetWidth surface
+        height = fromIntegral $ SDL.surfaceGetHeight surface
 
     [name] <- genObjectNames 1 :: IO [TextureObject]
     textureBinding Texture2D $= Just name
     rowAlignment Unpack $= 1
 
-    pixels <- surfaceGetPixels surface
+    pixels <- SDL.surfaceGetPixels surface
 
-    bpp <- pixelFormatGetBytesPerPixel (surfaceGetPixelFormat surface)
+    bpp <- SDL.pixelFormatGetBytesPerPixel (SDL.surfaceGetPixelFormat surface)
     let pixelFormat = case bpp of
                           1 -> RGB
                           3 -> RGB
@@ -72,6 +55,42 @@ loadImage path = do
     textureWrapMode Texture2D T $= (Repeated, Repeat)
 
     return $ Image name (fromIntegral width) (fromIntegral height)
+
+drawImageOrig :: Image -> Float -> Float -> IO ()
+drawImageOrig img l t = drawImage img l t (fromIntegral $ Video.imageWidth img) (fromIntegral $ Video.imageHeight img)
+
+drawImage :: Image -> Float -> Float -> Float -> Float -> IO ()
+drawImage img {-l t w h-} = drawImageEx img 0 0 0
+
+drawImageEx img ox oy r = drawImageRgn img ox oy r 0 0 (fromIntegral $ Video.imageWidth img) (fromIntegral $ Video.imageHeight img)
+
+drawImageRgn img ox oy r srcx srcy srcw srch x y w h = do
+    let iw = fromIntegral $ Video.imageWidth img
+        ih = fromIntegral $ Video.imageHeight img
+    textureBinding Texture2D $= Just (imageTexture img)
+    texture Texture2D $= Enabled
+
+    let srcl = srcx / iw
+        srct = srcy / ih
+        srcr = (srcx + srcw) / iw
+        srcb = (srcy + srch) / ih
+        ll = -ox
+        lt = -oy
+        lr = w - ox
+        lb = h - oy
+        calcX rx ry = (rx * cos r) - (ry * sin r) + x
+        calcY rx ry = (rx * sin r) + (ry * cos r) + y
+        drawV px py = vertex $ vertex3f (calcX px py) (calcY px py) 0
+
+    renderPrimitive Quads $ do
+        texCoord $ texCoord2f srcl srct
+        drawV ll lt
+        texCoord $ texCoord2f srcr srct
+        drawV lr lt
+        texCoord $ texCoord2f srcr srcb
+        drawV lr lb
+        texCoord $ texCoord2f srcl srcb
+        drawV ll lb
 
 
 vertex3f :: Float -> Float -> Float -> Vertex3 GLfloat

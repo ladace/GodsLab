@@ -67,6 +67,14 @@ doExport l = do
     pop l 1
     registerhsfunction l "loadImage" Video.loadImage
     registerhsfunction l "drawImage" Video.drawImage
+    registerhsfunction l "drawImageOrig" Video.drawImageOrig
+    registerhsfunction l "drawImageEx" Video.drawImageEx
+    registerhsfunction l "drawImageRgn" Video.drawImageRgn
+    registerhsfunction l "getImageWidth" $ mkIO Video.imageWidth
+    registerhsfunction l "getImageHeight" $ mkIO Video.imageHeight
+    where
+        mkIO :: (a -> b) -> a -> IO b
+        mkIO = (return.)
 
 
 foreign import ccall "wrapper"
@@ -99,7 +107,6 @@ instance StackValue Float where
     push l a = pushnumber l (realToFrac a)
     peek l n = liftM (Just . realToFrac) $ tonumber l n
     valuetype _ = TNUMBER
-
 
 instance StackValue Video.Image where
     push l a = do
