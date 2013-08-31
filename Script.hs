@@ -7,6 +7,9 @@ import Control.Monad
 
 import Scripting.Lua
 import qualified Video
+import qualified Audio
+--import qualified Graphics.UI.SDL.Mixer.Music as Audio
+--import qualified Graphics.UI.SDL.Mixer as Audio
 import qualified Graphics.Rendering.OpenGL as GL
 
 import App
@@ -24,11 +27,11 @@ onError :: Int -> (LuaError -> IO ()) -> IO ()
 onError 0 _ = return ()
 onError e proc = proc $ toLuaError e
 
-initialize :: IO LuaState
-initialize = do
+initialize :: Video.Video -> Audio.Audio -> IO LuaState
+initialize _ audio = do
     l <- newstate
     openlibs l
-    doExport l
+    doExport l audio
     return l
 
 load :: App a -> IO ()
@@ -61,8 +64,8 @@ load app = do
             print err
             setScriptStatus app ScriptInvalid
 
-doExport :: LuaState -> IO ()
-doExport l = do
+doExport :: LuaState -> Audio.Audio -> IO ()
+doExport l audio = do
     checkV 1 =<< newmetatable l "Image" -- returns 0
     pop l 1
     registerhsfunction l "loadImage" Video.loadImage
@@ -72,6 +75,9 @@ doExport l = do
     registerhsfunction l "drawImageRgn" Video.drawImageRgn
     registerhsfunction l "getImageWidth" $ mkIO Video.imageWidth
     registerhsfunction l "getImageHeight" $ mkIO Video.imageHeight
+
+    registerhsfunction l "playMusic" (Audio.playMusic audio)
+
     where
         mkIO :: (a -> b) -> a -> IO b
         mkIO = (return.)

@@ -10,6 +10,7 @@ import qualified Graphics.Rendering.OpenGL as GL
 import App
 import Render
 import Video as R
+import Audio
 
 import qualified Script
 
@@ -37,7 +38,9 @@ gui = do
 
     dat <- R.initialize defaultWidth defaultHeight
 
-    script <- Script.initialize
+    audioData <- Audio.initialize
+
+    script <- Script.initialize dat audioData
 
     glwSize <- WX.get glw clientSize
     GL.viewport $= (Position 0 0, convWG glwSize)
@@ -53,11 +56,13 @@ gui = do
     Script.load app
 
     WX.set glCanvas [ on mouse := mouseHandler app, on keyboard := keyHandler app ] -- MUST use glCanvas other than glw
-    WX.set f [layout := widget glw, on paintRaw := paintGL app glContext glCanvas]
-
+    WX.set f
+        [ layout := widget glw, on paintRaw := paintGL app glContext glCanvas
+        , on closing := Audio.finalize audioData >> propagateEvent]
 
     -- frameShowFullScreen f True wxFULLSCREEN_ALL
     timer f [interval := 20, on command := paintIt app glContext glCanvas (WX.Size defaultWidth defaultHeight)]
+
     return ()
 
     where
