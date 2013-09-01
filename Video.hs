@@ -1,6 +1,8 @@
 module Video where
 
 import Graphics.Rendering.OpenGL
+import qualified Graphics.UI.GLUT as GLUT
+
 import Graphics.UI.SDL.Image
 import qualified Graphics.UI.SDL.Types as SDL
 import Graphics.UI.SDL.Video (freeSurface)
@@ -92,6 +94,17 @@ drawImageRgn img ox oy r srcx srcy srcw srch x y w h = do
         texCoord $ texCoord2f srcl srcb
         drawV ll lb
 
+drawText :: Float -> Float -> String -> Bool -> IO ()
+drawText x y str mono = preservingMatrix $ do
+    color $ Color3 255 255 (255::GLfloat)
+
+    loadIdentity
+    ortho (-1) 1 (-1) 1 (-10000) 10000
+    scale 0.001 0.001 (0.001 ::GLfloat)
+    rasterPos $ Vertex2 x y
+    GLUT.renderString (if mono
+        then GLUT.MonoRoman
+        else GLUT.Roman) str
 
 vertex3f :: Float -> Float -> Float -> Vertex3 GLfloat
 vertex3f x y z = Vertex3 (realToFrac x) (realToFrac y) (realToFrac z)

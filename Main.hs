@@ -28,7 +28,6 @@ gui = do
 
     glw <- panel f [ clientSize := WX.Size defaultWidth defaultHeight]
 
-
     glCanvas <- glCanvasCreateEx glw 0 (Rect 0 0 defaultWidth defaultHeight) 0 "GLCanvas" [GL_RGBA] nullPalette
     glContext <- glContextCreateFromNull glCanvas
 
@@ -86,8 +85,7 @@ paintGL app glContext glWindow _ myrect _ = paintIt app glContext glWindow $ rec
 paintIt app glContext glWindow _ = do
     glCanvasSetCurrent glWindow glContext
     multisample $= Enabled
-
-    render app
+    render app    
     flush
     glCanvasSwapBuffers glWindow
     return ()

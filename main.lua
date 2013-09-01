@@ -8,7 +8,8 @@ oy = getImageHeight(img) / 2;
 playMusic('Music.ogg')
 
 function draw()
-    drawImageRgn(img, ox, oy, r, 0, 0, 300, 300, ox, oy, 640, 480)
+    -- drawImageRgn(img, ox, oy, r, 0, 0, 300, 300, ox, oy, 640, 480)
+    _drawText(100, 300, "ok", false)
     r = r + 0.01
 end
 

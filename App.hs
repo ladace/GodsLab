@@ -47,9 +47,13 @@ instance ScriptInvokeProc (IO t) where
                 z <- Lua.pcall l k 0 0
                 if z/=0
                     then do
-                        Just msg <- Lua.peek l (-1)
-                        Lua.pop l 1
-                        Prelude.fail msg
+                        res <- Lua.peek l (-1) 
+                        case res of
+                            Just msg -> do
+                                Lua.pop l 1
+                                Prelude.fail msg
+                            Nothing ->
+                                Prelude.fail "Unknown failure" -- FIXME sometimes when the script is wrong, it coredumps
                     else return undefined
 
 instance (Lua.StackValue t, ScriptInvokeProc b) =>  ScriptInvokeProc (t -> b) where

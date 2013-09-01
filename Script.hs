@@ -75,6 +75,7 @@ doExport l audio = do
     registerhsfunction l "drawImageRgn" Video.drawImageRgn
     registerhsfunction l "getImageWidth" $ mkIO Video.imageWidth
     registerhsfunction l "getImageHeight" $ mkIO Video.imageHeight
+    registerhsfunction l "_drawText" $ Video.drawText
 
     registerhsfunction l "playMusic" (Audio.playMusic audio)
 
