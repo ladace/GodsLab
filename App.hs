@@ -58,3 +58,7 @@ instance ScriptInvokeProc (IO t) where
 
 instance (Lua.StackValue t, ScriptInvokeProc b) =>  ScriptInvokeProc (t -> b) where
     invokeScript' app may l f a k x = invokeScript' app may l f (a >> Lua.push l x) (k+1)
+
+-- Utils
+checkV :: Eq a => a -> a -> IO ()
+checkV expected actual = when (expected /= actual) $ putStrLn "Assertion: Return value Not Matched!"
