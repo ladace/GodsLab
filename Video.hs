@@ -3,7 +3,7 @@ module Video (
     Image(Image), loadImage, Video.imageWidth, Video.imageHeight,
     drawImage, drawImageOrig, drawImageRgn, drawImageEx,
     Video.Font(Font), loadFont, drawText,
-    _drawText)where
+    _drawText) where
 
 import Graphics.Rendering.OpenGL
 import qualified Graphics.UI.GLUT as GLUT
@@ -116,8 +116,8 @@ newtype Font = Font FTGL.Font
 loadFont :: String -> Int -> IO Video.Font
 loadFont path sz = do
     f <- createTextureFont path
-    FTGL.setCharMap f FTGL.EncodingUnicode
     checkV 1 =<< setFontFaceSize f sz 0 -- costing calculation here, so put it in the load procedure
+    -- FTGL.setCharMap f FTGL.EncodingUnicode -- Not necessary
     return $ Font f
 drawText :: Video.Font -> String -> Float -> Float -> IO ()
 drawText (Font f) str x y = preservingMatrix $ do

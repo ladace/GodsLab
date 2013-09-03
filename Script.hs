@@ -67,7 +67,6 @@ load app = do
 doExport :: LuaState -> Audio.Audio -> IO ()
 doExport l audio = do
     checkV 1 =<< newmetatable l "Image" -- returns 0
-    checkV 1 =<< newmetatable l "Font" -- returns 0
     pop l 1
     registerhsfunction l "loadImage" Video.loadImage
     registerhsfunction l "drawImage" Video.drawImage
@@ -76,11 +75,9 @@ doExport l audio = do
     registerhsfunction l "drawImageRgn" Video.drawImageRgn
     registerhsfunction l "getImageWidth" $ mkIO Video.imageWidth
     registerhsfunction l "getImageHeight" $ mkIO Video.imageHeight
-    registerhsfunction l "_drawText" Video._drawText
-    registerhsfunction l "loadFont" Video.loadFont
-    registerhsfunction l "drawText" Video.drawText
+    registerhsfunction l "_drawText" $ Video.drawText
 
-    registerhsfunction l "playMusic" $ Audio.playMusic audio
+    registerhsfunction l "playMusic" (Audio.playMusic audio)
 
     where
         mkIO :: (a -> b) -> a -> IO b
@@ -94,6 +91,9 @@ errorfunc :: LuaCFunction
 errorfunc l = do
     pushvalue l 1
     return 1
+
+checkV :: Eq a => a -> a -> IO ()
+checkV expected actual = when (expected /= actual) $ putStrLn "Assertion: Return value Not Matched!"
 
 instance Storable Video.Image where
     peek p = do
@@ -116,13 +116,12 @@ instance StackValue Float where
     valuetype _ = TNUMBER
 
 instance StackValue Video.Image where
-    push l a = putData l a "Image"
-    peek = checkUData "Image"
-    valuetype _ = TUSERDATA
+    push l a = do
+        p <- newuserdata l $ sizeOf a
+        poke (castPtr p) a
+        setClass l "Image"
 
-instance StackValue Video.Font where
-    push l (Video.Font a) = putData l a "Font"
-    peek l n = liftM (liftM Video.Font) $ checkUData "Font" l n
+    peek = checkUData "Image"
     valuetype _ = TUSERDATA
 
 checkUData :: (StackValue a, Storable a) => String -> LuaState -> Int -> IO (Maybe a)
@@ -133,11 +132,6 @@ checkUData tname l argn =
         pop l 2
 
         success eq $ liftM Just $ touserdata l argn >>= S.peek)
-
-putData l a className= do
-    p <- newuserdata l $ sizeOf a
-    poke (castPtr p) a
-    setClass l className
 
 setClass l className= do
     getfield l registryindex className
